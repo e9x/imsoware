@@ -1,20 +1,16 @@
-import { dataUpdated, setupHooks, useKrunker } from '../hooks';
+import { toplevelComponent, useEffect } from '../hooks';
 import keys from '../keys';
 import type { Player } from '../krunker';
 import { inputIndex } from '../krunker';
-import { modules, objects } from '../loader';
+import { objects, useModule } from '../loader';
+import { inputHooks } from './bhop';
 
 let originalPos: { x: number; y: number; z: number } | undefined;
 
-setupHooks(() => {
-	useKrunker(() => {
-		if (!objects.world) return;
-
-		const { push } = objects.world.tmpInpts;
-
-		objects.world.tmpInpts.push = function (inputs) {
-			const result = push.call(this, inputs);
-
+toplevelComponent(() => {
+	console.log('test.ts useEffect useObject("world") HOOK is equal to 0');
+	useEffect(() => {
+		const inputHook = (inputs: number[]) => {
 			// freeze on server clock
 			// inputs[inputIndex.speedLimit] = [];
 
@@ -52,46 +48,27 @@ setupHooks(() => {
 					originalPos = undefined;
 				}
 			}
-
-			return result;
 		};
+
+		inputHooks.push(inputHook);
 
 		return () => {
-			if (!objects.world) return;
-
-			objects.world.tmpInpts.push = push;
+			inputHooks.splice(inputHooks.indexOf(inputHook), 1);
 		};
-	}, [modules.world]);
+	}, []);
 
-	useKrunker(() => {
-		if (!objects.game) return;
+	console.log('test.ts useEffect useModule("players") HOOK is equal to 1');
+	useEffect(() => {
+		const players = useModule('players');
 
-		const { add } = objects.game!.players;
+		if (!players) return;
 
-		objects.game.players.add = function (...args) {
-			const player = add.call(this, ...args);
-
-			if (player.isYTMP) {
-				objects.localPlayer = player;
-				dataUpdated();
-			}
-
-			return player;
-		};
-	}, [objects.game]);
-
-	useKrunker(() => {
-		if (!modules.players) return;
-
-		const { Player } = modules.players.exports;
+		const { Player } = players.exports;
 
 		console.log('hooking player');
 
 		// @ts-ignore
-		modules.players.exports.Player = function (
-			this: Player,
-			...args: unknown[]
-		) {
+		players.exports.Player = function (this: Player, ...args: unknown[]) {
 			// eslint-disable-next-line @typescript-eslint/ban-types
 			const result = (<Function>(<unknown>Player)).call(this, ...args);
 
@@ -103,9 +80,9 @@ setupHooks(() => {
 		};
 
 		return () => {
-			if (!modules.players) return;
+			if (!players) return;
 
-			modules.players.exports.Player = Player;
+			players.exports.Player = Player;
 		};
-	}, [modules.players]);
+	}, []);
 });

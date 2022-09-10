@@ -1,4 +1,4 @@
-import { dataUpdated, setupHooks, useKrunker } from './hooks';
+import { renderData, toplevelComponent, useEffect, useState } from './hooks';
 import type {
 	Game,
 	Config,
@@ -57,10 +57,15 @@ const loadGame = new Promise<void>((resolve) => {
 			for (const node of mutation.addedNodes) {
 				if (
 					node instanceof HTMLScriptElement &&
-					node.textContent?.includes('yendis')
+					// catch js obfuscator
+					(node.textContent?.includes('Yendis') ||
+						node.textContent?.includes(
+							'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+						))
 				) {
 					node.remove();
 					resolve();
+					mutationObserver.disconnect();
 				}
 			}
 		}
@@ -118,7 +123,6 @@ export interface GameModules {
 	instance: ModuleGameInstance;
 	players: ModulePlayers;
 	world: ModuleWorld;
-	[key: string]: Module;
 }
 
 export interface GameObjects {
@@ -142,38 +146,38 @@ module.exports.render = function (...args: any[]) {
 */
 
 const searchFilters: {
-	[key: string]: (exports: Readonly<Module['exports']>) => void | boolean;
+	[key in keyof GameModules]: (exports: Readonly<Module>) => void | boolean;
 } = {
-	config(exports) {
-		if (typeof exports?.gameVersion === 'string') {
+	config(module) {
+		if (typeof module.exports?.gameVersion === 'string') {
 			return true;
 		}
 	},
-	ui(exports) {
+	ui(module) {
 		if (
-			typeof exports?.render === 'function' &&
-			typeof exports.canvas === 'object'
+			typeof module.exports?.render === 'function' &&
+			typeof module.exports.canvas === 'object'
 		) {
 			return true;
 		}
 	},
-	instance(exports) {
-		if (typeof exports?.obj === 'function') {
+	instance(module) {
+		if (typeof module.exports?.obj === 'function') {
 			return true;
 		}
 	},
-	players(exports) {
+	players(module) {
 		if (
-			typeof exports?.manager === 'function' &&
-			typeof exports.Player === 'function'
+			typeof module.exports?.manager === 'function' &&
+			typeof module.exports.Player === 'function'
 		) {
 			return true;
 		}
 	},
-	world(exports) {
+	world(module) {
 		if (
-			typeof exports === 'function' &&
-			exports.toString().includes('pchObjc=')
+			typeof module.exports === 'function' &&
+			module.exports.toString().includes('pchObjc=')
 		) {
 			return true;
 		}
@@ -184,42 +188,114 @@ export const objects: Partial<GameObjects> = {};
 
 export const modules: Partial<GameModules> = {};
 
-setupHooks(() => {
-	useKrunker(() => {
-		if (!modules.instance) return;
+type UpdateEnt<T> = [keyof T, () => void];
 
-		const { obj } = modules.instance.exports;
+const moduleUpdates: UpdateEnt<GameModules>[] = [];
+const objectUpdates: UpdateEnt<GameObjects>[] = [];
 
-		modules.instance.exports.obj = function (this: Game, ...args) {
+const updateObjects = <T extends keyof GameObjects>(
+	key: T,
+	value: GameObjects[T]
+) => {
+	objects[key] = value;
+	for (const [use, callback] of objectUpdates) if (use === key) callback();
+};
+
+const updateModules = <T extends keyof GameModules>(
+	key: T,
+	value: GameModules[T]
+) => {
+	modules[key] = value;
+	console.log('set modules', modules, key);
+	for (const [use, callback] of moduleUpdates) if (use === key) callback();
+};
+
+export const useModule = <T extends keyof GameModules>(
+	use: T
+): typeof modules[T] => {
+	const [module, setModule] = useState(modules[use]);
+
+	useEffect(() => {
+		const callback: UpdateEnt<GameModules> = [
+			use,
+			() => {
+				setModule(modules[use]);
+			},
+		];
+
+		moduleUpdates.push(callback);
+
+		return () => {
+			moduleUpdates.splice(moduleUpdates.indexOf(callback), 1);
+		};
+	}, []);
+
+	return module;
+};
+
+export const useObject = <T extends keyof GameObjects>(
+	use: T
+): typeof objects[T] => {
+	const [object, setObject] = useState(objects[use]);
+
+	useEffect(() => {
+		console.log(use, 'useEffect for useObject called');
+
+		const callback: UpdateEnt<GameObjects> = [
+			use,
+			() => {
+				console.log('set objcet', use, objects[use]);
+				setObject(objects[use]);
+			},
+		];
+
+		objectUpdates.push(callback);
+
+		return () => {
+			objectUpdates.splice(objectUpdates.indexOf(callback), 1);
+		};
+	}, []);
+
+	return object;
+};
+
+toplevelComponent(() => {
+	useEffect(() => {
+		const instance = useModule('instance');
+
+		if (!instance) return;
+
+		const { obj } = instance.exports;
+
+		instance.exports.obj = function (this: Game, ...args) {
 			const result = obj.call(this, ...args);
 
-			// eslint-disable-next-line @typescript-eslint/no-this-alias
-			objects.game = this;
-			dataUpdated();
+			updateObjects('game', this);
 
 			return result;
 		};
 
 		return () => {
-			if (!modules.instance) return;
-
-			modules.instance.exports.obj = obj;
+			instance.exports.obj = obj;
 		};
-	}, [modules.instance]);
+	}, []);
 
-	useKrunker(() => {
-		if (!modules.world) return;
+	useEffect(() => {
+		const world = useModule('world');
 
-		const World = modules.world.exports;
+		if (!world) return;
 
-		/*				objects.renderer = renderer;
-			objects.util = util;
-			objects.socket = socket;
-			objects.canvas = canvas;
-*/
+		const World = world.exports;
+
+		/*
+		objects.renderer = renderer;
+		objects.util = util;
+		objects.socket = socket;
+		objects.canvas = canvas;
+		*/
 
 		// @ts-ignore
-		modules.world.exports = function (
+		world.exports = function (
 			this: World,
 			...args: [
 				render: Module, // identical to render lib: genBody, invisMat, GEOS
@@ -236,19 +312,31 @@ setupHooks(() => {
 			// eslint-disable-next-line @typescript-eslint/ban-types
 			const result = (<Function>(<unknown>World)).call(this, ...args);
 
-			objects.world = this;
-
-			dataUpdated();
+			updateObjects('world', this);
 
 			return result;
 		};
 
 		return () => {
-			if (!modules.world) return;
-
-			modules.world.exports = World;
+			world.exports = World;
 		};
-	}, [objects.world]);
+	}, []);
+
+	useEffect(() => {
+		const game = useObject('game');
+
+		if (!game) return;
+
+		const { add } = game.players;
+
+		game.players.add = function (...args) {
+			const player = add.call(this, ...args);
+
+			if (player.isYTMP) updateObjects('localPlayer', player);
+
+			return player;
+		};
+	}, []);
 });
 
 const modulesPromise: Promise<GameModules> = new Promise<GameModules>(
@@ -258,18 +346,18 @@ const modulesPromise: Promise<GameModules> = new Promise<GameModules>(
 		const src = await source();
 
 		// not an array of modules
-		function giveMeTheModules(module: Module) {
+		const giveMeTheModules = (module: Module) => {
 			for (const name in searchFilters) {
-				if (searchFilters[name](module.exports)) {
-					modules[name] = module;
+				if (searchFilters[name as keyof GameModules](module)) {
+					updateModules(name as keyof GameModules, module);
 					console.log(`Module ${module.i} was ${name}`);
 
-					dataUpdated();
+					renderData();
 
 					break;
 				}
 			}
-		}
+		};
 
 		const giveMeTheModules_s = `_${Math.random().toString(36).slice(2)}`;
 

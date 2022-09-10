@@ -1,6 +1,6 @@
 import config, { saveConfig } from '../config';
-import { setupHooks, useKrunker } from '../hooks';
-import { modules, objects } from '../loader';
+import { toplevelComponent, useEffect } from '../hooks';
+import { useModule } from '../loader';
 import type { BladeApi, BladeController, View } from '@tweakpane/core';
 import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
 
@@ -8,13 +8,17 @@ let fpsGraph:
 	| undefined
 	| (BladeApi<BladeController<View>> & { begin: () => void; end: () => void });
 
-setupHooks(() => {
-	useKrunker(() => {
-		if (!modules.ui) return;
+toplevelComponent(() => {
+	useEffect(() => {
+		const ui = useModule('ui');
 
-		const { render } = modules.ui.exports;
+		console.log('test UI', { ui });
 
-		modules.ui.exports.render = function (...args) {
+		if (!ui) return;
+
+		const { render } = ui.exports;
+
+		ui.exports.render = function (...args) {
 			fpsGraph?.begin();
 			const result = render.call(this, ...args);
 			// if we did any ticks/additional rendering
@@ -24,11 +28,11 @@ setupHooks(() => {
 		};
 
 		return () => {
-			if (!modules.ui) return;
+			if (!ui) return;
 
-			modules.ui.exports.render = render;
+			ui.exports.render = render;
 		};
-	}, [modules.ui]);
+	}, []);
 });
 
 export async function createPane() {
@@ -52,11 +56,6 @@ export async function createPane() {
 		label: 'FPS',
 		lineCount: 2,
 	});
-}
-
-if (process.env.NODE_ENV === 'development') {
-	global.modules = modules;
-	global.objects = objects;
 }
 
 export function fixPane(node: HTMLStyleElement) {

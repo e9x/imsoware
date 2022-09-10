@@ -1,12 +1,12 @@
-import { setupHooks, useKrunker } from '../hooks';
-import { objects } from '../loader';
+import { toplevelComponent, useEffect } from '../hooks';
+import { useObject } from '../loader';
 
-setupHooks(() => {
-	useKrunker(() => {
-		if (!objects.canvas) return;
+toplevelComponent(() => {
+	useEffect(() => {
+		const canvas = useObject('canvas');
 
-		const canvas = objects.canvas;
-		canvas;
+		if (!canvas) return;
+
 		console.log(canvas);
-	}, [objects.canvas]);
+	}, []);
 });

@@ -4,6 +4,14 @@ import './components/bhop';
 import './components/gui';
 import './components/esp';
 import './components/test';
+import { modules, objects } from './loader';
+
+console.log('Hack init');
+
+if (process.env.NODE_ENV === 'development') {
+	global.modules = modules;
+	global.objects = objects;
+}
 
 const mutationObserver = new MutationObserver((mutations) => {
 	for (const mutation of mutations) {
