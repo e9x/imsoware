@@ -28,6 +28,30 @@ type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
 type PluginEntry = ArrElement<Required<Configuration>['plugins']>;
 
 const config: Configuration = {
+	devServer: {
+		hot: true,
+		static: resolve('dist'),
+		allowedHosts: ['krunker.io'],
+		client: { webSocketURL: 'ws://localhost:3000/ws' },
+		headers: {
+			'access-control-allow-headers': '*',
+			'access-control-allow-origin': '*',
+			'access-control-allow-methods': '*',
+			'access-control-expose-headers': '*',
+			'access-control-max-age': '7200',
+		},
+		compress: false,
+		port: 3000,
+	},
+	entry: './src/index.ts',
+	target: 'web',
+	output: {
+		filename: 'main.js',
+		path: resolve('dist'),
+		publicPath: '/',
+		// Krunker's frontend depends on other webpack libraries
+		uniqueName: 'imsoware',
+	},
 	devtool: isDevelopment ? 'eval-source-map' : 'source-map',
 	mode: isDevelopment ? 'development' : 'production',
 	module: {
@@ -121,28 +145,6 @@ const config: Configuration = {
 			isDevelopment && new CaseSensitivePathsPlugin(),
 		] as (PluginEntry | false)[] as PluginEntry[]
 	).filter(Boolean),
-	entry: './src/index.ts',
-	target: 'web',
-	output: {
-		filename: 'main.js',
-		path: resolve('dist'),
-		publicPath: '/',
-	},
-	devServer: {
-		hot: true,
-		static: resolve('dist'),
-		allowedHosts: ['krunker.io'],
-		client: { webSocketURL: 'ws://localhost:3000/ws' },
-		headers: {
-			'access-control-allow-headers': '*',
-			'access-control-allow-origin': '*',
-			'access-control-allow-methods': '*',
-			'access-control-expose-headers': '*',
-			'access-control-max-age': '7200',
-		},
-		compress: false,
-		port: 3000,
-	},
 };
 
 export default config;
