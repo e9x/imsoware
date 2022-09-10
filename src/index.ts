@@ -191,14 +191,14 @@ hookCallbacks.push([
 ]);
 
 async function createPane() {
+	// import tweakpane at a later time because DOM isn't ready yet
 	const { Pane } = await import(/* webpackMode: 'eager' */ 'tweakpane');
 
 	const pane = new Pane({
 		title: 'Cheese',
 	});
 
-	// @ts-ignore
-	window.pane = pane;
+	if (process.env.NODE_ENV === 'development') window.pane = pane;
 
 	pane.on('change', saveConfig);
 
