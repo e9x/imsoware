@@ -102,8 +102,8 @@ hookCallbacks.push([
 				try {
 					// @ts-ignore
 					window.doHook(keys, inputs, inputIndex, push, this);
-				} catch (error) {
-					console.error(error);
+				} catch (err) {
+					console.error(err);
 					// @ts-ignore
 					window.doHook = undefined;
 				}

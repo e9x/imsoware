@@ -8,8 +8,8 @@ let config = {
 
 try {
 	config = deepmerge(config, JSON.parse(GM_getValue(CONFIG_KEY)));
-} catch (_error) {
-	console.log(_error);
+} catch (err) {
+	console.log(err);
 }
 
 export default config;
