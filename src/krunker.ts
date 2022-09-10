@@ -1,6 +1,25 @@
 import type { Object3D, PerspectiveCamera, Vector3 } from 'three';
 import type THREE from 'three';
 
+export const inputIndex = {
+	frame: 0,
+	delta: 1, // capped at 0.1-33
+	xDir: 2,
+	yDir: 3,
+	moveDir: 4,
+	shoot: 5,
+	scope: 6,
+	jump: 7,
+	reload: 8,
+	crouch: 9,
+	weaponScroll: 10,
+	weaponSwap: 11,
+	speedLimit: 12,
+	reset: 13,
+	tweenTime: 14,
+	tweenProgress: 15,
+};
+
 export interface Config {
 	gameVersion: string;
 }
@@ -23,7 +42,7 @@ export interface Socket {
 	captchaHolder: HTMLElement | null;
 }
 
-export class Renderer {
+export declare class Renderer {
 	THREE: typeof THREE;
 	camera: PerspectiveCamera;
 	fpsCamera: PerspectiveCamera;
@@ -31,7 +50,7 @@ export class Renderer {
 }
 
 // thanks typehole ...
-export class World {
+export declare class World {
 	binds: Binds;
 	scrollToSwap: boolean;
 	toggleSets: number[];
@@ -269,7 +288,7 @@ export class MapManager {}
 
 export type Inputs = [];
 
-export class Player {
+export declare class Player {
 	constructor(...args: unknown[]);
 	isYTMP: boolean;
 	objInstances: Object3D | null;
@@ -287,7 +306,7 @@ export class Player {
 	velocity: Vector3;
 }
 
-export class PlayersManager {
+export declare class PlayersManager {
 	list: Player[];
 	/**
 	 * returns the existing player or creates a new instance
@@ -369,7 +388,7 @@ interface GameConfig {
 	classes: number[];
 }
 
-export class Game {
+export declare class Game {
 	THREE: typeof THREE;
 	sid: number;
 	config: GameConfig;
