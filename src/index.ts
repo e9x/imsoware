@@ -2,6 +2,7 @@ import { createPane, fixPane } from './components/gui';
 import './loader';
 import './components/bhop';
 import './components/gui';
+import './components/esp';
 import './components/test';
 
 const mutationObserver = new MutationObserver((mutations) => {

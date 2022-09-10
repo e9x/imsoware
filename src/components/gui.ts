@@ -1,5 +1,6 @@
 import config, { saveConfig } from '../config';
-import { hookCallbacks, modules, objects } from '../loader';
+import { setupHooks, useKrunker } from '../hooks';
+import { modules, objects } from '../loader';
 import type { BladeApi, BladeController, View } from '@tweakpane/core';
 import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
 
@@ -7,10 +8,13 @@ let fpsGraph:
 	| undefined
 	| (BladeApi<BladeController<View>> & { begin: () => void; end: () => void });
 
-hookCallbacks.push([
-	() => {
-		const { render } = modules.ui!.exports;
-		modules.ui!.exports.render = function (...args) {
+setupHooks(() => {
+	useKrunker(() => {
+		if (!modules.ui) return;
+
+		const { render } = modules.ui.exports;
+
+		modules.ui.exports.render = function (...args) {
 			fpsGraph?.begin();
 			const result = render.call(this, ...args);
 			// if we did any ticks/additional rendering
@@ -18,10 +22,14 @@ hookCallbacks.push([
 			fpsGraph?.end();
 			return result;
 		};
-	},
-	[],
-	['ui'],
-]);
+
+		return () => {
+			if (!modules.ui) return;
+
+			modules.ui.exports.render = render;
+		};
+	}, [modules.ui]);
+});
 
 export async function createPane() {
 	// import tweakpane at a later time because DOM isn't ready yet

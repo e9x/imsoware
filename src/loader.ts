@@ -1,3 +1,4 @@
+import { dataUpdated, setupHooks, useKrunker } from './hooks';
 import type {
 	Game,
 	Config,
@@ -179,83 +180,76 @@ const searchFilters: {
 	},
 };
 
-export const hookCallbacks: [() => void, string[]?, string[]?][] = [
-	[
-		() => {
-			const { obj } = modules.instance!.exports;
-
-			modules.instance!.exports.obj = function (this: Game, ...args) {
-				const result = obj.call(this, ...args);
-
-				// eslint-disable-next-line @typescript-eslint/no-this-alias
-				objects.game = this;
-				modulesUpdated();
-
-				return result;
-			};
-		},
-		[],
-		['instance'],
-	],
-	[
-		() => {
-			const World = modules.world!.exports;
-
-			/*				objects.renderer = renderer;
-				objects.util = util;
-				objects.socket = socket;
-				objects.canvas = canvas;
-*/
-
-			// @ts-ignore
-			modules.world.exports = function (this: World, ...args: unknown[]) {
-				// eslint-disable-next-line @typescript-eslint/ban-types
-				const result = (<Function>(<unknown>World)).call(this, ...args);
-
-				objects.world = this;
-
-				modulesUpdated();
-
-				return result;
-			};
-		},
-		[],
-		['world'],
-	],
-];
-
 export const objects: Partial<GameObjects> = {};
 
 export const modules: Partial<GameModules> = {};
 
-const calledBacks = new WeakSet();
+setupHooks(() => {
+	useKrunker(() => {
+		if (!modules.instance) return;
 
-export function modulesUpdated() {
-	hk: for (const [
-		callback,
-		objectDependencies,
-		moduleDependencies,
-	] of hookCallbacks) {
-		if (calledBacks.has(callback)) continue;
+		const { obj } = modules.instance.exports;
 
-		if (moduleDependencies)
-			for (const dependency of moduleDependencies) {
-				if (!(dependency in modules)) {
-					continue hk;
-				}
-			}
+		modules.instance.exports.obj = function (this: Game, ...args) {
+			const result = obj.call(this, ...args);
 
-		if (objectDependencies)
-			for (const dependency of objectDependencies) {
-				if (!(dependency in objects)) {
-					continue hk;
-				}
-			}
+			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			objects.game = this;
+			dataUpdated();
 
-		calledBacks.add(callback);
-		callback();
-	}
-}
+			return result;
+		};
+
+		return () => {
+			if (!modules.instance) return;
+
+			modules.instance.exports.obj = obj;
+		};
+	}, [modules.instance]);
+
+	useKrunker(() => {
+		if (!modules.world) return;
+
+		const World = modules.world.exports;
+
+		/*				objects.renderer = renderer;
+			objects.util = util;
+			objects.socket = socket;
+			objects.canvas = canvas;
+*/
+
+		// @ts-ignore
+		modules.world.exports = function (
+			this: World,
+			...args: [
+				render: Module, // identical to render lib: genBody, invisMat, GEOS
+				endscreen: Module, // identical to endscreen lib: showEndScreen, isMobile
+				utils: Module, // identical to utils lib: emptyString, compressNumArray, byte shift stuff
+				server: Module, // identical to servers lib: capFlag, addScripts, AI
+				config: Module, // identical to config data: apiURL, esportNews, assets
+				socket: Socket, // identical to socket lib: ahNum, socket, send
+				overlay: Module // identical to overlay lib: bloodCustom, ctx, canvas
+			]
+		) {
+			console.log(this, args);
+
+			// eslint-disable-next-line @typescript-eslint/ban-types
+			const result = (<Function>(<unknown>World)).call(this, ...args);
+
+			objects.world = this;
+
+			dataUpdated();
+
+			return result;
+		};
+
+		return () => {
+			if (!modules.world) return;
+
+			modules.world.exports = World;
+		};
+	}, [objects.world]);
+});
 
 const modulesPromise: Promise<GameModules> = new Promise<GameModules>(
 	// eslint-disable-next-line no-async-promise-executor
@@ -270,7 +264,7 @@ const modulesPromise: Promise<GameModules> = new Promise<GameModules>(
 					modules[name] = module;
 					console.log(`Module ${module.i} was ${name}`);
 
-					modulesUpdated();
+					dataUpdated();
 
 					break;
 				}

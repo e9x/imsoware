@@ -1,15 +1,18 @@
+import { dataUpdated, setupHooks, useKrunker } from '../hooks';
 import keys from '../keys';
 import type { Player } from '../krunker';
 import { inputIndex } from '../krunker';
-import { hookCallbacks, modules, modulesUpdated, objects } from '../loader';
+import { modules, objects } from '../loader';
 
 let originalPos: { x: number; y: number; z: number } | undefined;
 
-hookCallbacks.push([
-	() => {
-		const { push } = objects.world!.tmpInpts;
+setupHooks(() => {
+	useKrunker(() => {
+		if (!objects.world) return;
 
-		objects.world!.tmpInpts.push = function (inputs) {
+		const { push } = objects.world.tmpInpts;
+
+		objects.world.tmpInpts.push = function (inputs) {
 			const result = push.call(this, inputs);
 
 			// freeze on server clock
@@ -25,7 +28,7 @@ hookCallbacks.push([
 					// @ts-ignore
 					window.doHook = undefined;
 				}
-			} else {
+			} else if (objects.localPlayer) {
 				// Attempt some funny work
 				// Most of this has been patched
 				// I sent an older snippet of fiddling with speedLimit to HighNoon..
@@ -35,16 +38,16 @@ hookCallbacks.push([
 
 					if (!originalPos) {
 						originalPos = {
-							x: objects.localPlayer!.x,
-							y: objects.localPlayer!.y,
-							z: objects.localPlayer!.z,
+							x: objects.localPlayer.x,
+							y: objects.localPlayer.y,
+							z: objects.localPlayer.z,
 						};
 					}
 
 					// freeze player
-					objects.localPlayer!.x = originalPos.x;
-					objects.localPlayer!.y = originalPos.y;
-					objects.localPlayer!.z = originalPos.z;
+					objects.localPlayer.x = originalPos.x;
+					objects.localPlayer.y = originalPos.y;
+					objects.localPlayer.z = originalPos.z;
 				} else {
 					originalPos = undefined;
 				}
@@ -52,40 +55,35 @@ hookCallbacks.push([
 
 			return result;
 		};
-	},
-	['world'],
-]);
 
-hookCallbacks.push([
-	() => {
-		const canvas = objects.canvas!;
-		canvas;
-		console.log(canvas);
-	},
-	['canvas'],
-]);
+		return () => {
+			if (!objects.world) return;
 
-hookCallbacks.push([
-	() => {
+			objects.world.tmpInpts.push = push;
+		};
+	}, [modules.world]);
+
+	useKrunker(() => {
+		if (!objects.game) return;
+
 		const { add } = objects.game!.players;
 
-		objects.game!.players.add = function (...args) {
+		objects.game.players.add = function (...args) {
 			const player = add.call(this, ...args);
 
 			if (player.isYTMP) {
 				objects.localPlayer = player;
-				modulesUpdated();
+				dataUpdated();
 			}
 
 			return player;
 		};
-	},
-	['game'],
-]);
+	}, [objects.game]);
 
-hookCallbacks.push([
-	() => {
-		const { Player } = modules.players!.exports;
+	useKrunker(() => {
+		if (!modules.players) return;
+
+		const { Player } = modules.players.exports;
 
 		console.log('hooking player');
 
@@ -103,7 +101,11 @@ hookCallbacks.push([
 
 			return result;
 		};
-	},
-	[],
-	['players'],
-]);
+
+		return () => {
+			if (!modules.players) return;
+
+			modules.players.exports.Player = Player;
+		};
+	}, [modules.players]);
+});
