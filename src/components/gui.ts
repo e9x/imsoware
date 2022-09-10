@@ -12,8 +12,6 @@ toplevelComponent(() => {
 	useEffect(() => {
 		const ui = useModule('ui');
 
-		console.log('test UI', { ui });
-
 		if (!ui) return;
 
 		const { render } = ui.exports;
@@ -43,7 +41,7 @@ export async function createPane() {
 		title: 'Cheese',
 	});
 
-	if (process.env.NODE_ENV === 'development') window.pane = pane;
+	if (process.env.NODE_ENV !== 'production') window.pane = pane;
 
 	pane.on('change', saveConfig);
 

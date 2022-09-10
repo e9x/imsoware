@@ -51,8 +51,6 @@ export const toplevelComponent = (callback: () => void) => {
 };
 
 export const renderData = () => {
-	console.log('data updated', changedStates);
-
 	setupI = 0;
 
 	for (const setup of setups) {
@@ -104,12 +102,6 @@ export const useState = <T>(initialValue: T): [T, (newValue: T) => void] => {
 
 	if (setup.init) hook.states[hook.stateI] = new State(initialValue);
 
-	console.log('useState', {
-		setupI: setupI,
-		'setup.hookI': setup.hookI,
-		'hook.stateI': hook.stateI,
-	});
-
 	const state = hook.states[hook.stateI] as State<T>;
 
 	const stateValue = state.get();
@@ -132,7 +124,6 @@ export const useEffect = (
 
 	const originalHookI = setup.hookI;
 
-	console.log('set hookI to ', setup.nextHookI, 'because setupI is', setupI);
 	setup.hookI = setup.nextHookI;
 	setup.nextHookI = setup.hookI + 1;
 
@@ -153,7 +144,6 @@ export const useEffect = (
 	} else {
 		for (const state of hook.states)
 			if (changedStates.includes(state)) {
-				console.log('hook had changed state', state);
 				render = true;
 				break;
 			}
@@ -164,7 +154,6 @@ export const useEffect = (
 			} else {
 				for (let i = 0; i < dependencies.length; i++)
 					if (hook.previousDependencies[i] !== dependencies[i]) {
-						console.log('dependency changed');
 						render = true;
 						break;
 					}
@@ -172,14 +161,7 @@ export const useEffect = (
 		}
 	}
 
-	console.log('data useEffect:', { 'setup.hookI': setup.hookI });
-
 	if (render) {
-		/*console.log('Reset hook.stateI to', 0, {
-			setupI: setupI,
-			'setup.hookI': setup.hookI,
-			'hook.stateI': hook.stateI,
-		});*/
 		hook.dependencies = dependencies;
 		hook.stateI = -1;
 

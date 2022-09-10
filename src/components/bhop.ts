@@ -7,20 +7,10 @@ export const inputHooks: ((inputs: number[]) => void)[] = [];
 
 toplevelComponent(() => {
 	useEffect(() => {
-		// console.log('BHOP INIT ' + '.'.repeat(20));
-
-		// console.log('Call world:');
 		const world = useObject('world');
-		// console.log('Call localPlayer:');
 		const localPlayer = useObject('localPlayer');
 
-		// console.log('BHOP DONE ' + '.'.repeat(20));
-
-		console.trace({ world, localPlayer }, 'bhop data');
-
 		if (!world || !localPlayer) return;
-
-		console.log('got localPlayer', localPlayer);
 
 		let lastJump = 0;
 

@@ -8,21 +8,20 @@ import { inputHooks } from './bhop';
 let originalPos: { x: number; y: number; z: number } | undefined;
 
 toplevelComponent(() => {
-	console.log('test.ts useEffect useObject("world") HOOK is equal to 0');
 	useEffect(() => {
+		if (process.env.NODE_ENV !== 'development') return;
+
 		const inputHook = (inputs: number[]) => {
 			// freeze on server clock
 			// inputs[inputIndex.speedLimit] = [];
 
 			// @ts-ignore
-			if (window.doHook) {
+			if (unsafeWindow.doHook) {
 				try {
-					// @ts-ignore
-					window.doHook(keys, inputs, inputIndex, push, this);
+					unsafeWindow.doHook(keys, inputs, inputIndex);
 				} catch (err) {
 					console.error(err);
-					// @ts-ignore
-					window.doHook = undefined;
+					unsafeWindow.doHook = undefined;
 				}
 			} else if (objects.localPlayer) {
 				// Attempt some funny work
@@ -57,7 +56,6 @@ toplevelComponent(() => {
 		};
 	}, []);
 
-	console.log('test.ts useEffect useModule("players") HOOK is equal to 1');
 	useEffect(() => {
 		const players = useModule('players');
 

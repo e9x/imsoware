@@ -8,7 +8,7 @@ import type {
 	Canvas,
 	Util,
 } from './krunker';
-import type { Object3D, Renderer } from 'three';
+import type { Renderer } from 'three';
 
 interface Token {
 	sid: number;
@@ -52,26 +52,18 @@ async function generateToken(clientKey: ClientKey): Promise<Token> {
 }
 
 const loadGame = new Promise<void>((resolve) => {
-	const mutationObserver = new MutationObserver((mutations) => {
-		for (const mutation of mutations) {
-			for (const node of mutation.addedNodes) {
-				if (
-					node instanceof HTMLScriptElement &&
-					// catch js obfuscator
-					(node.textContent?.includes('Yendis') ||
-						node.textContent?.includes(
-							'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-						))
-				) {
-					node.remove();
-					resolve();
-					mutationObserver.disconnect();
-				}
-			}
-		}
-	});
+	const { fetch } = window;
 
-	mutationObserver.observe(document, { subtree: true, childList: true });
+	// prevent original loader from happening
+	unsafeWindow.fetch = (url, init) => {
+		if (url === '/pkg/loader.js') {
+			unsafeWindow.fetch = fetch;
+			resolve();
+			return Promise.resolve(new Response(''));
+		}
+
+		return fetch(url, init);
+	};
 });
 
 async function createToken(): Promise<number[]> {
@@ -102,9 +94,7 @@ export interface ModulePlayers extends Module {
 }
 
 export interface ModuleWorld extends Module {
-	exports: {
-		pchObjc: Object3D;
-	};
+	exports: () => unknown;
 }
 
 export interface ModuleGameInstance extends Module {
@@ -146,7 +136,9 @@ module.exports.render = function (...args: any[]) {
 */
 
 const searchFilters: {
-	[key in keyof GameModules]: (exports: Readonly<Module>) => void | boolean;
+	[K in keyof GameModules]: (
+		module: Readonly<GameModules[K]>
+	) => void | boolean;
 } = {
 	config(module) {
 		if (typeof module.exports?.gameVersion === 'string') {
@@ -206,7 +198,6 @@ const updateModules = <T extends keyof GameModules>(
 	value: GameModules[T]
 ) => {
 	modules[key] = value;
-	console.log('set modules', modules, key);
 	for (const [use, callback] of moduleUpdates) if (use === key) callback();
 };
 
@@ -239,12 +230,9 @@ export const useObject = <T extends keyof GameObjects>(
 	const [object, setObject] = useState(objects[use]);
 
 	useEffect(() => {
-		console.log(use, 'useEffect for useObject called');
-
 		const callback: UpdateEnt<GameObjects> = [
 			use,
 			() => {
-				console.log('set objcet', use, objects[use]);
 				setObject(objects[use]);
 			},
 		];

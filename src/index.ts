@@ -8,7 +8,7 @@ import { modules, objects } from './loader';
 
 console.log('Hack init');
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV !== 'production') {
 	global.modules = modules;
 	global.objects = objects;
 }
