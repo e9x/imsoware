@@ -22,4 +22,4 @@ In the interest of this going beyond crap, I feel like it's best to release the 
 
 The API is currently hosted on https://imsoware.sys32.dev/.
 
-Like previous APIs, I will some efforts to keep this API open.
+Like previous APIs, I will make some efforts to keep this API open.
