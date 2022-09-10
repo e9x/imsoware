@@ -23,3 +23,24 @@ In the interest of this being a viable groundwork for cheats, I feel like it's b
 The API is currently hosted on https://imsoware.sys32.dev/.
 
 Like previous APIs, I will make some efforts to keep this API open.
+
+## Quickstart
+
+1. Clone the repository
+```sh
+$ git clone https://github.com/e9x/imsoware.git 
+> Cloning into 'imsoware'...
+$ cd imsoware/
+```
+2. Install dependencies
+```sh
+$ npm install
+```
+3. Start the dev server
+```sh
+$ npm run dev
+```
+4. Add the [userscript](./imsoware.user.js)
+5. [Open Krunker](https://krunker.io/)
+
+You may need to wait for the initial dev compilation to finish before going to Krunker.
