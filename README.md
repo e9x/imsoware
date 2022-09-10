@@ -15,10 +15,10 @@ In true matchmaking nature, the matchmaker helper (defined in [.env](./.env), `W
 
 I did this in the past for many reasons:
 
-- Running Yendis WASM code is scary! (It's wrriten in Rust)
+- Running Yendis WASM code is scary! (It's wrriten in Rust.)
 - Matchmaker helper is the most sensitive part of my cheats.
 
-In the interest of this going beyond crap, I feel like it's best to release the source code in the future. I am willing to license out the backend (in a way that doesn't make the source vulnerable, run my bytecode!)
+In the interest of this being a viable groundwork for cheats, I feel like it's best to release the source code in the future. I am willing to license out the backend (in a way that doesn't make the source vulnerable ie. run my bytecode)
 
 The API is currently hosted on https://imsoware.sys32.dev/.
 
