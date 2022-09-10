@@ -7,8 +7,8 @@
 	"license": "GPLv3",
 	"scripts": {
 		"start": "http-server ./dist/ --port 3000",
-		"dev": "NODE_ENV=development ts-node-esm node_modules/webpack-cli/bin/cli.js serve --config webpack.config.ts",
-		"build": "NODE_ENV=production ts-node-esm node_modules/webpack-cli/bin/cli.js --config webpack.config.ts"
+		"dev": "cross-env NODE_ENV=development ts-node-esm node_modules/webpack-cli/bin/cli.js serve --config webpack.config.ts",
+		"build": "cross-env NODE_ENV=production ts-node-esm node_modules/webpack-cli/bin/cli.js --config webpack.config.ts"
 	},
 	"dependencies": {
 		"@swc/helpers": "^0.4.11",
@@ -19,7 +19,6 @@
 	},
 	"devDependencies": {
 		"@ianvs/prettier-plugin-sort-imports": "^3.4.2",
-		"@pmmmwh/react-refresh-webpack-plugin": "^0.5.7",
 		"@swc/core": "^1.2.249",
 		"@tweakpane/core": "^1.1.0",
 		"@types/case-sensitive-paths-webpack-plugin": "^2.1.6",
@@ -29,6 +28,7 @@
 		"@typescript-eslint/eslint-plugin": "^5.36.2",
 		"@typescript-eslint/parser": "^5.36.2",
 		"case-sensitive-paths-webpack-plugin": "^2.4.0",
+		"cross-env": "^7.0.3",
 		"dotenv-expand": "^9.0.0",
 		"dotenv-flow": "^3.2.0",
 		"eslint": "^8.23.0",

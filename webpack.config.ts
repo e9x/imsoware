@@ -29,7 +29,8 @@ type PluginEntry = ArrElement<Required<Configuration>['plugins']>;
 
 const config: Configuration = {
 	devServer: {
-		hot: true,
+		hot: false,
+		liveReload: false,
 		static: resolve('dist'),
 		allowedHosts: ['krunker.io'],
 		client: { webSocketURL: 'ws://localhost:3000/ws' },
