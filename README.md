@@ -40,7 +40,7 @@ $ npm install
 ```sh
 $ npm run dev
 ```
-4. Add the [userscript](./imsoware.user.js)
+4. Add the [userscript](./imsoware.user.js) (click raw)
 5. [Open Krunker](https://krunker.io/)
 
 You may need to wait for the initial dev compilation to finish before going to Krunker.
