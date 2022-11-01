@@ -24,7 +24,7 @@
 
 const http = new XMLHttpRequest();
 // Assuming Webpack Dev Server is listening on port 3000:
-http.open('GET', 'http://localhost:3000/main.js', false);
+http.open("GET", "http://localhost:3000/main.js", false);
 http.send();
 // eslint-disable-next-line no-eval
 eval(http.response);

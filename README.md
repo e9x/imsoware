@@ -27,19 +27,25 @@ Like previous APIs, I will make some efforts to keep this API open.
 ## Quickstart
 
 1. Clone the repository
+
 ```sh
-$ git clone https://github.com/e9x/imsoware.git 
+$ git clone https://github.com/e9x/imsoware.git
 > Cloning into 'imsoware'...
 $ cd imsoware/
 ```
+
 2. Install dependencies
+
 ```sh
 $ npm install
 ```
+
 3. Start the dev server
+
 ```sh
 $ npm run dev
 ```
+
 4. Add the [userscript](./imsoware.user.js) (click raw)
 5. [Open Krunker](https://krunker.io/)
 

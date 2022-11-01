@@ -1,14 +1,14 @@
 {
-	"compilerOptions": {
-		"outDir": "dist",
-		"target": "ES2022",
-		"lib": ["DOM", "DOM.Iterable", "ES2022"],
-		"noEmit": true,
-		"strict": true,
-		"module": "ES2020",
-		"moduleResolution": "node",
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true
-	},
-	"include": ["src/**/*"]
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "noEmit": true,
+    "strict": true,
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*"]
 }

@@ -1,12 +1,12 @@
-import { toplevelComponent, useEffect } from '../hooks';
-import { useObject } from '../loader';
+import { toplevelComponent, useEffect } from "../hooks";
+import { useObject } from "../loader";
 
 toplevelComponent(() => {
-	useEffect(() => {
-		const canvas = useObject('canvas');
+  useEffect(() => {
+    const canvas = useObject("canvas");
 
-		if (!canvas) return;
+    if (!canvas) return;
 
-		console.log(canvas);
-	}, []);
+    console.log(canvas);
+  }, []);
 });

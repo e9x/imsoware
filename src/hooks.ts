@@ -6,62 +6,62 @@ let setupI = -1;
 let nextSetupI = 0;
 
 interface Hook {
-	stateI: number;
-	states: State[];
-	previousDependencies: unknown[];
-	// set before callback, accessed by useState
-	dependencies: unknown[];
-	unregister?: () => void;
+  stateI: number;
+  states: State[];
+  previousDependencies: unknown[];
+  // set before callback, accessed by useState
+  dependencies: unknown[];
+  unregister?: () => void;
 }
 
 interface Setup {
-	nextHookI: number;
-	hookI: number;
-	hooks: Hook[];
-	// true if initial hooks are being setup
-	init: boolean;
-	callback: () => void;
+  nextHookI: number;
+  hookI: number;
+  hooks: Hook[];
+  // true if initial hooks are being setup
+  init: boolean;
+  callback: () => void;
 }
 
 const setups: Setup[] = [];
 
 export const toplevelComponent = (callback: () => void) => {
-	const setup: Setup = {
-		hooks: [],
-		init: true,
-		hookI: -1,
-		nextHookI: 0,
-		callback,
-	};
+  const setup: Setup = {
+    hooks: [],
+    init: true,
+    hookI: -1,
+    nextHookI: 0,
+    callback,
+  };
 
-	const originalSetupI = setupI;
+  const originalSetupI = setupI;
 
-	setupI = nextSetupI;
-	nextSetupI = setupI + 1;
+  setupI = nextSetupI;
+  nextSetupI = setupI + 1;
 
-	setups[setupI] = setup;
+  setups[setupI] = setup;
 
-	nextSetupI = setupI + 1;
+  nextSetupI = setupI + 1;
 
-	// maybe .callback() triggers a change in nextSetupI
-	setup.callback();
-	setup.init = false;
+  // maybe .callback() triggers a change in nextSetupI
+  setup.callback();
+  setup.init = false;
 
-	setupI = originalSetupI;
+  setupI = originalSetupI;
 };
 
 export const renderData = () => {
-	setupI = 0;
+  setupI = 0;
 
-	for (const setup of setups) {
-		setup.nextHookI = 0;
-		setup.hookI = -1;
-		nextSetupI = setupI + 1;
-		setup.callback();
-		setupI = nextSetupI;
-	}
+  for (const setup of setups) {
+    setup.nextHookI = 0;
+    setup.hookI = -1;
+    nextSetupI = setupI + 1;
+    setup.callback();
+    setupI = nextSetupI;
+  }
 
-	changedStates = [];
+  changedStates = [];
 };
 
 let changedStates: State[] = [];
@@ -77,101 +77,101 @@ let changedStates: State[] = [];
 };*/
 
 class State<T = unknown> {
-	private value: T;
-	constructor(value: T) {
-		this.value = value;
-	}
-	get() {
-		return this.value;
-	}
-	set(value: T) {
-		this.value = value;
-		changedStates.push(this);
-		// synchronous:
-		renderData();
-		// queRender();
-	}
+  private value: T;
+  constructor(value: T) {
+    this.value = value;
+  }
+  get() {
+    return this.value;
+  }
+  set(value: T) {
+    this.value = value;
+    changedStates.push(this);
+    // synchronous:
+    renderData();
+    // queRender();
+  }
 }
 
 export const useState = <T>(initialValue: T): [T, (newValue: T) => void] => {
-	const setup = setups[setupI];
+  const setup = setups[setupI];
 
-	const hook = setup.hooks[setup.hookI];
+  const hook = setup.hooks[setup.hookI];
 
-	hook.stateI++;
+  hook.stateI++;
 
-	if (setup.init) hook.states[hook.stateI] = new State(initialValue);
+  if (setup.init) hook.states[hook.stateI] = new State(initialValue);
 
-	const state = hook.states[hook.stateI] as State<T>;
+  const state = hook.states[hook.stateI] as State<T>;
 
-	const stateValue = state.get();
+  const stateValue = state.get();
 
-	hook.dependencies.push(stateValue);
+  hook.dependencies.push(stateValue);
 
-	return [
-		stateValue,
-		(value: T) => {
-			state.set(value);
-		},
-	];
+  return [
+    stateValue,
+    (value: T) => {
+      state.set(value);
+    },
+  ];
 };
 
 export const useEffect = (
-	callback: () => void | (() => void),
-	dependencies: unknown[]
+  callback: () => void | (() => void),
+  dependencies: unknown[]
 ) => {
-	const setup = setups[setupI];
+  const setup = setups[setupI];
 
-	const originalHookI = setup.hookI;
+  const originalHookI = setup.hookI;
 
-	setup.hookI = setup.nextHookI;
-	setup.nextHookI = setup.hookI + 1;
+  setup.hookI = setup.nextHookI;
+  setup.nextHookI = setup.hookI + 1;
 
-	if (setup.init)
-		setup.hooks[setup.hookI] = {
-			stateI: -1,
-			states: [],
-			dependencies,
-			previousDependencies: [],
-		};
+  if (setup.init)
+    setup.hooks[setup.hookI] = {
+      stateI: -1,
+      states: [],
+      dependencies,
+      previousDependencies: [],
+    };
 
-	const hook = setup.hooks[setup.hookI];
+  const hook = setup.hooks[setup.hookI];
 
-	let render = false;
+  let render = false;
 
-	if (setup.init) {
-		render = true;
-	} else {
-		for (const state of hook.states)
-			if (changedStates.includes(state)) {
-				render = true;
-				break;
-			}
+  if (setup.init) {
+    render = true;
+  } else {
+    for (const state of hook.states)
+      if (changedStates.includes(state)) {
+        render = true;
+        break;
+      }
 
-		if (!render) {
-			if (hook.previousDependencies.length !== dependencies.length) {
-				render = true;
-			} else {
-				for (let i = 0; i < dependencies.length; i++)
-					if (hook.previousDependencies[i] !== dependencies[i]) {
-						render = true;
-						break;
-					}
-			}
-		}
-	}
+    if (!render) {
+      if (hook.previousDependencies.length !== dependencies.length) {
+        render = true;
+      } else {
+        for (let i = 0; i < dependencies.length; i++)
+          if (hook.previousDependencies[i] !== dependencies[i]) {
+            render = true;
+            break;
+          }
+      }
+    }
+  }
 
-	if (render) {
-		hook.dependencies = dependencies;
-		hook.stateI = -1;
+  if (render) {
+    hook.dependencies = dependencies;
+    hook.stateI = -1;
 
-		if (!setup.init && hook.unregister) hook.unregister();
-		const unregister = callback();
-		if (unregister) hook.unregister = unregister;
+    if (!setup.init && hook.unregister) hook.unregister();
+    const unregister = callback();
+    if (unregister) hook.unregister = unregister;
 
-		hook.previousDependencies = dependencies;
-		hook.dependencies = [];
-	}
+    hook.previousDependencies = dependencies;
+    hook.dependencies = [];
+  }
 
-	setup.hookI = originalHookI;
+  setup.hookI = originalHookI;
 };
